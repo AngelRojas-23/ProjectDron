@@ -247,6 +247,7 @@ export class MavlinkBridge {
     } else if (status !== 'connected' && previousStatus === 'connected') {
       this.startSimulation();
     } else if (status === 'disconnected' && !this.simulationActive) {
+      // Start simulation when disconnected (including initial state)
       this.startSimulation();
     }
   }
@@ -452,9 +453,11 @@ export class MavlinkBridge {
 
     this.simulationInterval = setInterval(() => {
       const drones = this.roomManager?.getAllDrones() || [];
+      // Always emit for testing - if no drones registered, emit for default drone
+      const droneIds = drones.length > 0 ? drones : ['drone-1'];
       const now = Date.now();
 
-      for (const droneId of drones) {
+      for (const droneId of droneIds) {
         const telemetry: Telemetry = {
           id: `telemetry-${now}`,
           flightId: `flight-${droneId}`,
@@ -479,7 +482,7 @@ export class MavlinkBridge {
 
         this.roomManager?.broadcastTelemetry(droneId, telemetry);
       }
-    }, 2000);
+    }, 500); // Faster interval for testing
   }
 
   /**

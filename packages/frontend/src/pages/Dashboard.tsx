@@ -1,14 +1,18 @@
 /**
  * Dashboard page component
- * Protected route that displays drone list and logout button
+ * Protected route that displays drone list, telemetry, and control buttons
  */
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
+import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
+import { TelemetryPanel } from '../components/TelemetryPanel';
+import { CommandButtons } from '../components/CommandButtons';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const isOperator = user?.role === 'operator';
 
   const handleLogout = () => {
     // Clear auth state
@@ -17,10 +21,16 @@ export default function Dashboard() {
     navigate('/');
   };
 
+  // For demo, use drone-1 as the selected drone
+  const selectedDroneId = 'drone-1';
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>Dashboard</h1>
+        <div style={styles.headerLeft}>
+          <h1 style={styles.title}>Dashboard</h1>
+          <ConnectionStatusBadge />
+        </div>
         <button onClick={handleLogout} style={styles.logoutButton}>
           Logout
         </button>
@@ -38,6 +48,18 @@ export default function Dashboard() {
             No drones available. Connect a drone to see it here.
           </p>
         </div>
+
+        {/* Telemetry Panel - always show for demo */}
+        <div style={styles.telemetrySection}>
+          <TelemetryPanel droneId={selectedDroneId} />
+        </div>
+
+        {/* Command Buttons - only for operators */}
+        {isOperator && (
+          <div style={styles.controlSection}>
+            <CommandButtons />
+          </div>
+        )}
       </main>
     </div>
   );
@@ -57,6 +79,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '1rem 2rem',
     backgroundColor: 'white',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
   },
   title: {
     margin: 0,
@@ -91,6 +118,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '1.5rem',
     borderRadius: '8px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    marginBottom: '1rem',
   },
   sectionTitle: {
     margin: '0 0 1rem',
@@ -100,5 +128,11 @@ const styles: Record<string, React.CSSProperties> = {
   placeholder: {
     color: '#6b7280',
     fontStyle: 'italic',
+  },
+  telemetrySection: {
+    marginBottom: '1rem',
+  },
+  controlSection: {
+    marginBottom: '1rem',
   },
 };
