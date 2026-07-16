@@ -1,5 +1,5 @@
 {
-  "name": "@sd/backend",
+  "name": "@sd/streaming",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,25 +10,14 @@
     "dev": "node --import tsx --watch src/server.ts",
     "start": "node --import tsx src/server.ts",
     "test": "vitest run",
-    "lint": "tsc --noEmit",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^5.10.2",
-    "@fastify/cookie": "^9.3.1",
-    "@fastify/cors": "^9.0.1",
-    "bcryptjs": "^2.4.3",
-    "fastify": "^4.26.2",
-    "fastify-plugin": "^4.5.1",
-    "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.7.4",
     "@sd/shared": "workspace:*"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.20",
     "prisma": "^5.10.2",
     "tsx": "^4.7.1",
