@@ -11,6 +11,14 @@
 export type UserRole = 'operator' | 'viewer';
 
 /**
+ * Stream status for video feeds
+ * - online: stream is active and accessible
+ * - offline: stream is not available
+ * - error: stream encountered an error
+ */
+export type StreamStatus = 'online' | 'offline' | 'error';
+
+/**
  * User entity representing an authenticated user
  */
 export interface User {
@@ -40,6 +48,9 @@ export interface Drone {
   name: string;
   clientId: string;
   status: 'idle' | 'flying' | 'maintenance';
+  // Stream URL and status for video feeds
+  streamUrl?: string;
+  streamStatus: StreamStatus;
   // PostGIS-aware decimal fields for geographic coordinates
   lat: number;
   lon: number;

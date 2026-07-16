@@ -32,6 +32,13 @@ enum UserRole {
   viewer
 }
 
+// Stream status for video feeds
+enum StreamStatus {
+  online
+  offline
+  error
+}
+
 // Client model - represents drone operator companies
 model Client {
   id        String   @id @default(uuid())
@@ -49,19 +56,22 @@ model Client {
 
 // Drone model - represents physical drones
 model Drone {
-  id        String      @id @default(uuid())
+  id        String       @id @default(uuid())
   name      String
-  status    DroneStatus @default(idle)
+  status    DroneStatus  @default(idle)
+  // Stream URL and status for video feeds
+  streamUrl String?
+  streamStatus StreamStatus @default(offline)
   // PostGIS-aware decimal fields for geographic coordinates
   // Using Decimal(10,7) for lat/lon to support high-precision GPS
-  lat       Decimal     @default(0) @db.Decimal(10, 7)
-  lon       Decimal     @default(0) @db.Decimal(10, 7)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  lat       Decimal      @default(0) @db.Decimal(10, 7)
+  lon       Decimal      @default(0) @db.Decimal(10, 7)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   // Relations
   clientId  String
-  client    Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client    Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
   flights   Flight[]
 
   @@map("drones")

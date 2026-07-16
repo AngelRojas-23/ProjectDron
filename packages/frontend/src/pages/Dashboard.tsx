@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/auth';
 import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { CommandButtons } from '../components/CommandButtons';
+import { VideoPlayer } from '../components/VideoPlayer';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -49,9 +50,15 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Telemetry Panel - always show for demo */}
-        <div style={styles.telemetrySection}>
-          <TelemetryPanel droneId={selectedDroneId} />
+        {/* Video and Telemetry Split - 60% / 40% */}
+        <div style={styles.splitSection}>
+          <div className="dashboard-video-section" style={styles.videoSection}>
+            <h2 style={styles.sectionTitle}>Live Video</h2>
+            <VideoPlayer droneId={selectedDroneId} />
+          </div>
+          <div className="dashboard-telemetry-section" style={styles.telemetrySection}>
+            <TelemetryPanel droneId={selectedDroneId} />
+          </div>
         </div>
 
         {/* Command Buttons - only for operators */}
@@ -129,10 +136,40 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#6b7280',
     fontStyle: 'italic',
   },
-  telemetrySection: {
+  splitSection: {
+    display: 'flex',
+    gap: '1rem',
     marginBottom: '1rem',
+  },
+  videoSection: {
+    flex: '0 0 60%',
+    backgroundColor: 'white',
+    padding: '1.5rem',
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  telemetrySection: {
+    flex: '0 0 40%',
   },
   controlSection: {
     marginBottom: '1rem',
   },
 };
+
+// Inject responsive styles for mobile
+if (typeof document !== 'undefined') {
+  const styleId = 'dashboard-responsive-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      @media (max-width: 768px) {
+        .dashboard-video-section,
+        .dashboard-telemetry-section {
+          flex: 0 0 100% !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}

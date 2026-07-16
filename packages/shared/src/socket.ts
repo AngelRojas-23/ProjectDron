@@ -3,7 +3,7 @@
  * Defines the communication interface between server and client
  */
 
-import type { Telemetry, Drone } from './index.js';
+import type { Telemetry, Drone, StreamStatus } from './index.js';
 
 /**
  * Events emitted from server to connected clients
@@ -39,6 +39,11 @@ export interface ServerToClient {
    * Emitted when MAVLink bridge status changes
    */
   'mavlink:status': (status: 'connected' | 'disconnected' | 'reconnecting', message?: string) => void;
+
+  /**
+   * Emitted when stream status changes
+   */
+  'stream:status': (droneId: string, status: StreamStatus) => void;
 }
 
 /**

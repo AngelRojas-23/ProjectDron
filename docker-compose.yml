@@ -42,6 +42,33 @@ services:
       MAVLINK_SRC: "udpin:0.0.0.0:14550"
     restart: unless-stopped
 
+  mediamtx:
+    image: bluenviron/mediamtx:1
+    container_name: streaming-dron-mediamtx
+    ports:
+      - "1935:1935"
+      - "8888:8888"
+    environment:
+      MTX_PROTOCOLS: tcp
+      MTX_RTMP_ADDRESS: ":1935"
+      MTX_HLS_ADDRESS: ":8888"
+      MTX_HLS_VARIANT: lowLatency
+      MTX_HLS_SEGMENT_DURATION: 1s
+      MTX_HLS_PART_DURATION: 200ms
+    restart: unless-stopped
+
+  ffmpeg-simulator:
+    image: jrottenberg/ffmpeg
+    container_name: streaming-dron-ffmpeg-sim
+    command: >
+      -re -f lavfi -i testsrc2=size=1280x720:rate=30
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -f flv rtmp://mediamtx:1935/drone/drone-1
+    depends_on:
+      mediamtx:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   pgadmin_data:
