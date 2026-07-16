@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - represents authenticated users
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String   // bcrypt hashed
+  role      UserRole @default(viewer)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clients   Client[]
+
+  @@map("users")
+}
+
+// User roles
+enum UserRole {
+  operator
+  viewer
+}
+
+// Client model - represents drone operator companies
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drones    Drone[]
+
+  @@map("clients")
+}
+
+// Drone model - represents physical drones
+model Drone {
+  id        String      @id @default(uuid())
+  name      String
+  status    DroneStatus @default(idle)
+  // PostGIS-aware decimal fields for geographic coordinates
+  // Using Decimal(10,7) for lat/lon to support high-precision GPS
+  lat       Decimal     @default(0) @db.Decimal(10, 7)
+  lon       Decimal     @default(0) @db.Decimal(10, 7)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  clientId  String
+  client    Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  flights   Flight[]
+
+  @@map("drones")
+}
+
+// Drone status enum
+enum DroneStatus {
+  idle
+  flying
+  maintenance
+}
+
+// Flight model - represents a drone flight session
+model Flight {
+  id        String    @id @default(uuid())
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  droneId   String
+  drone     Drone     @relation(fields: [droneId], references: [id], onDelete: Cascade)
+  telemetry Telemetry[]
+
+  @@map("flights")
+}
+
+// Telemetry model - represents drone telemetry data points
+model Telemetry {
+  id        String   @id @default(uuid())
+  // Geographic coordinates - PostGIS-aware decimals
+  lat       Decimal  @db.Decimal(10, 7)
+  lon       Decimal  @db.Decimal(10, 7)
+  // Altitude in meters
+  alt       Decimal  @db.Decimal(8, 2)
+  // Battery percentage (0-100)
+  battery   Int      @default(100)
+  ts        DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  // Relations
+  flightId  String
+  flight    Flight   @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  droneId   String
+
+  @@index([droneId])
+  @@index([flightId])
+  @@index([ts])
+
+  @@map("telemetry")
+}
