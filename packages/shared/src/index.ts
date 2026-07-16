@@ -73,6 +73,22 @@ export interface Telemetry {
   alt: number;
   // Battery percentage (0-100)
   battery: number;
+  // Extended MAVLink fields
+  // Navigation
+  heading: number | null;
+  groundspeed: number | null;
+  airspeed: number | null;
+  // Power
+  voltage: number | null;
+  current: number | null;
+  // Flight state
+  flightMode: string | null;
+  armed: boolean | null;
+  // MAVLink source identifiers
+  mavSystemId: number | null;
+  mavComponentId: number | null;
+  // Connection source indicator
+  connectionSource: 'mavlink' | 'simulator';
   // Timestamp of the telemetry reading
   ts: Date;
   createdAt: Date;

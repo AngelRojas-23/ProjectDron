@@ -131,10 +131,16 @@ importers:
       socket.io:
         specifier: ^4.7.4
         version: 4.8.3
+      ws:
+        specifier: ^8.16.0
+        version: 8.21.1
     devDependencies:
       '@types/node':
         specifier: ^20.11.20
         version: 20.19.43
+      '@types/ws':
+        specifier: ^8.5.10
+        version: 8.18.1
       prisma:
         specifier: ^5.10.2
         version: 5.22.0

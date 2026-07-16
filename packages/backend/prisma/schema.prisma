@@ -100,6 +100,17 @@ model Telemetry {
   alt       Decimal  @db.Decimal(8, 2)
   // Battery percentage (0-100)
   battery   Int      @default(100)
+  // Extended MAVLink fields
+  heading   Decimal? @db.Decimal(8, 2)
+  groundspeed Decimal? @db.Decimal(8, 2)
+  airspeed  Decimal? @db.Decimal(8, 2)
+  voltage   Decimal? @db.Decimal(8, 3)
+  current   Decimal? @db.Decimal(8, 2)
+  flightMode String?
+  armed     Boolean?
+  mavSystemId    Int?
+  mavComponentId Int?
+  connectionSource String @default("simulator")
   ts        DateTime @default(now())
   createdAt DateTime @default(now())
 
@@ -113,4 +124,29 @@ model Telemetry {
   @@index([ts])
 
   @@map("telemetry")
+}
+
+// FlightSession model - represents an active MAVLink flight session
+model FlightSession {
+  id        String           @id @default(uuid())
+  droneId   String
+  startTime DateTime         @default(now())
+  endTime   DateTime?
+  mavSystemId    Int?
+  mavComponentId Int?
+  status    FlightSessionStatus @default(active)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([droneId])
+  @@index([status])
+  @@index([startTime])
+
+  @@map("flight_sessions")
+}
+
+enum FlightSessionStatus {
+  active
+  completed
+  aborted
 }

@@ -6,12 +6,38 @@
 import type { Server, Socket } from 'socket.io';
 import type { RoomManager } from './rooms.js';
 import type { Telemetry } from '@sd/shared/index.js';
+import { sendCommand, type CommandType } from './mavlink/commands.js';
+import { type MavlinkBridge } from './mavlink/bridge.js';
 export type { Telemetry } from '@sd/shared/index.js';
 
 /**
- * Control command types
+ * Control command types (now includes arm/disarm)
  */
-type ControlCommand = 'takeoff' | 'land' | 'return';
+type ControlCommand = 'arm' | 'disarm' | 'takeoff' | 'RTL' | 'land' | 'return';
+
+/**
+ * Global reference to the MAVLink bridge (set by server.ts)
+ */
+let bridge: MavlinkBridge | null = null;
+
+/**
+ * Global reference to Socket.io server for broadcasting
+ */
+let ioServer: Server | null = null;
+
+/**
+ * Set the MAVLink bridge reference for command handling
+ */
+export function setMavlinkBridge(b: MavlinkBridge): void {
+  bridge = b;
+}
+
+/**
+ * Get the Socket.io server instance
+ */
+function getIo(): Server | null {
+  return ioServer;
+}
 
 /**
  * Register all event handlers with the Socket.io server
@@ -19,6 +45,9 @@ type ControlCommand = 'takeoff' | 'land' | 'return';
  * @param roomManager - The room manager instance
  */
 export function registerEventHandlers(io: Server, roomManager: RoomManager): void {
+  // Store reference for command broadcasting
+  ioServer = io;
+
   // Handle new connections
   io.on('connection', (socket: Socket) => {
     console.log(`Socket connected: ${socket.id}, User: ${socket.data.user?.userId}`);
@@ -86,17 +115,18 @@ function handleDroneJoin(
 /**
  * Handle drone:control event
  * Processes control commands, rejects non-operators
+ * Sends commands via MAVLink bridge if connected, otherwise returns error
  * @param socket - The socket sending command
  * @param roomManager - The room manager
  * @param command - The control command
  * @param callback - Response callback
  */
-function handleDroneControl(
+async function handleDroneControl(
   socket: Socket,
   _roomManager: RoomManager,
   command: ControlCommand,
   callback: (response: { ok: boolean; error?: string }) => void
-): void {
+): Promise<void> {
   // Get user from socket data
   const user = socket.data.user;
 
@@ -113,18 +143,40 @@ function handleDroneControl(
   }
 
   // Validate command
-  const validCommands: ControlCommand[] = ['takeoff', 'land', 'return'];
+  const validCommands: ControlCommand[] = ['arm', 'disarm', 'takeoff', 'RTL', 'land', 'return'];
   if (!validCommands.includes(command)) {
     callback({ ok: false, error: 'Invalid command' });
     return;
   }
 
-  // Process command (in real app, this would send to drone)
-  console.log(`Operator ${user.userId} sent control command: ${command}`);
+  // Map 'return' command to RTL
+  const mavCommand: CommandType = command === 'return' ? 'RTL' : command as CommandType;
 
-  // Acknowledge success
-  callback({ ok: true });
-}
+  // Check if bridge is connected - if not, reject command
+  if (!bridge || !bridge.isConnected()) {
+    console.log(`[Command] MAVLink bridge not connected, cannot send command: ${command}`);
+    callback({ ok: false, error: 'MAVLink bridge not connected' });
+    return;
+  }
+
+    // Send command via MAVLink
+    console.log(`[Command] Operator ${user.userId} sending command: ${mavCommand}`);
+
+    try {
+      const result = await sendCommand(mavCommand);
+
+      // Broadcast result to all clients
+      const io = getIo();
+      if (io) {
+        io.emit('control:ack', mavCommand, result.success, result.message);
+      }
+
+      callback({ ok: result.success, error: result.success ? undefined : result.message });
+    } catch (error) {
+      console.error(`[Command] Failed to send command: ${error}`);
+      callback({ ok: false, error: 'Failed to send command' });
+    }
+  }
 
 /**
  * Broadcast telemetry to all sockets in a drone room

@@ -6,8 +6,9 @@
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { verifyAccess } from '@sd/shared/jwt.js';
-import { registerEventHandlers } from './events.js';
+import { registerEventHandlers, setMavlinkBridge } from './events.js';
 import { RoomManager } from './rooms.js';
+import { createMavlinkBridge } from './mavlink/bridge.js';
 
 // Server configuration
 const HOST = process.env.HOST || '0.0.0.0';
@@ -77,35 +78,6 @@ function createStreamingServer(): { io: Server; roomManager: RoomManager; httpSe
 }
 
 /**
- * Simulate telemetry data for demonstration
- * Emits random telemetry for each drone room every 2 seconds
- */
-function startTelemetrySimulation(roomManager: RoomManager): void {
-  setInterval(() => {
-    // Get all drone rooms
-    const drones = roomManager.getAllDrones();
-
-    for (const droneId of drones) {
-      // Generate simulated telemetry
-      const telemetry = {
-        id: `telemetry-${Date.now()}`,
-        flightId: `flight-${droneId}`,
-        droneId,
-        lat: 33.9425 + (Math.random() - 0.5) * 0.01,
-        lon: -118.4081 + (Math.random() - 0.5) * 0.01,
-        alt: 50 + Math.random() * 50,
-        battery: 70 + Math.floor(Math.random() * 30),
-        ts: new Date(),
-        createdAt: new Date(),
-      };
-
-      // Broadcast to room
-      roomManager.broadcastTelemetry(droneId, telemetry);
-    }
-  }, 2000);
-}
-
-/**
  * Start the streaming server
  */
 async function start() {
@@ -116,12 +88,21 @@ async function start() {
     console.log(`📡 Streaming server running on port ${STREAMING_PORT}`);
   });
 
-  // Start simulated telemetry
-  startTelemetrySimulation(roomManager);
+  // Initialize MAVLink bridge with fallback to simulation
+  const bridge = createMavlinkBridge();
+  bridge.setServer(io);
+  bridge.setRoomManager(roomManager);
+
+  // Pass bridge reference to events for command handling
+  setMavlinkBridge(bridge);
+
+  // Start the MAVLink bridge (will use simulation if not connected)
+  bridge.start();
 
   // Graceful shutdown
   const shutdown = () => {
     console.log('Shutting down streaming server...');
+    bridge.stop();
     io.close();
     process.exit(0);
   };

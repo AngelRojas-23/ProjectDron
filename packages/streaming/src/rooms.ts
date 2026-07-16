@@ -135,6 +135,14 @@ export class RoomManager {
   }
 
   /**
+   * Get the Socket.io server instance
+   * @returns The Socket.io server or null
+   */
+  getIO(): Server | null {
+    return this.io;
+  }
+
+  /**
    * Stop telemetry simulation for a drone
    * @param droneId - The drone ID
    */

@@ -32,6 +32,16 @@ services:
       postgres:
         condition: service_healthy
 
+  mavlink2rest:
+    image: mavlink/mavlink2rest
+    container_name: streaming-dron-mavlink
+    ports:
+      - "8088:8088"
+      - "14550:14550/udp"
+    environment:
+      MAVLINK_SRC: "udpin:0.0.0.0:14550"
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   pgadmin_data:

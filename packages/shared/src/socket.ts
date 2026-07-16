@@ -34,6 +34,11 @@ export interface ServerToClient {
    * Emitted when control command is acknowledged
    */
   'control:ack': (command: string, success: boolean, message?: string) => void;
+
+  /**
+   * Emitted when MAVLink bridge status changes
+   */
+  'mavlink:status': (status: 'connected' | 'disconnected' | 'reconnecting', message?: string) => void;
 }
 
 /**
@@ -53,12 +58,12 @@ export interface ClientToServer {
    */
   'drone:leave': (droneId: string) => void;
 
-  /**
-   * Send a control command to a drone
-   * Only operators can use this
-   * @param command - The command to send
-   */
-  'drone:control': (command: 'takeoff' | 'land' | 'return') => void;
+/**
+ * Send a control command to a drone
+ * Only operators can use this
+ * @param command - The command to send (arm, disarm, takeoff, RTL, land)
+ */
+  'drone:control': (command: 'arm' | 'disarm' | 'takeoff' | 'RTL' | 'land') => void;
 
   /**
    * Request current drone state
