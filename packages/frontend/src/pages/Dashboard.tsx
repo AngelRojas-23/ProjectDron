@@ -16,6 +16,21 @@ import { VideoPlayer } from '../components/VideoPlayer';
 import { DroneSelector } from '../components/DroneSelector';
 import { DroneMap } from '../components/DroneMap';
 
+/**
+ * Navigation link styles
+ */
+const navLinkStyle: React.CSSProperties = {
+  padding: '0.5rem 1rem',
+  backgroundColor: 'transparent',
+  color: '#374151',
+  border: 'none',
+  borderRadius: '4px',
+  fontSize: '0.875rem',
+  fontWeight: '500',
+  cursor: 'pointer',
+  textDecoration: 'none',
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -50,6 +65,9 @@ export default function Dashboard() {
           <h1 style={styles.title}>Dashboard</h1>
           <ConnectionStatusBadge />
           <AlertPanel />
+          <a href="/flights" style={navLinkStyle}>
+            Flight History
+          </a>
         </div>
         <button onClick={handleLogout} style={styles.logoutButton}>
           Logout

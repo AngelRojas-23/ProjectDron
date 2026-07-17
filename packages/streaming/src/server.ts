@@ -9,6 +9,7 @@ import { verifyAccess, validateJwtSecret } from '@sd/shared/jwt.js';
 import { registerEventHandlers, setMavlinkBridge } from './events.js';
 import { RoomManager } from './rooms.js';
 import { createMavlinkBridge } from './mavlink/bridge.js';
+import { TelemetryRecorder } from './telemetryRecorder.js';
 
 // Server configuration
 const HOST = process.env.HOST || '0.0.0.0';
@@ -102,9 +103,25 @@ async function start() {
   // Start the MAVLink bridge (will use simulation if not connected)
   bridge.start();
 
+  // Initialize and start the telemetry recorder
+  const telemetryRecorder = new TelemetryRecorder();
+  telemetryRecorder.start();
+
+  // Intercept telemetry broadcast to also record to database
+  const originalBroadcast = roomManager.broadcastTelemetry.bind(roomManager);
+  roomManager.broadcastTelemetry = function (droneId: string, telemetry: Parameters<typeof originalBroadcast>[1]) {
+    // Broadcast as usual
+    originalBroadcast(droneId, telemetry);
+    // Also record to database
+    telemetryRecorder.record(telemetry).catch((err) => {
+      console.error('Failed to record telemetry:', err);
+    });
+  };
+
   // Graceful shutdown
-  const shutdown = () => {
+  const shutdown = async () => {
     console.log('Shutting down streaming server...');
+    await telemetryRecorder.stop();
     bridge.stop();
     io.close();
     process.exit(0);

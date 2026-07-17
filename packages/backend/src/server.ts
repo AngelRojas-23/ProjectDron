@@ -12,6 +12,7 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { connectDatabase, disconnectDatabase } from './db/prisma.js';
 import healthRoutes from './routes/health.js';
+import flightRoutes from './routes/flights.js';
 import authRoutes from './auth/routes.js';
 import { validateJwtSecret } from '@sd/shared/jwt.js';
 
@@ -85,6 +86,9 @@ async function buildServer() {
 
   // Register health check routes
   await fastify.register(healthRoutes);
+
+  // Register flight history routes
+  await fastify.register(flightRoutes);
 
   // Register authentication routes
   await fastify.register(authRoutes, { prefix: '/auth' });
