@@ -7,6 +7,7 @@ import { useAuthStore } from './store/auth';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Flights from './pages/Flights';
+import Admin from './pages/Admin';
 
 /**
  * Protected route wrapper
@@ -44,6 +45,16 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Flights />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected route - admin panel (operator only) */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <Admin />
           </ProtectedRoute>
         }
       />

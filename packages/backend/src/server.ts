@@ -13,6 +13,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import { connectDatabase, disconnectDatabase } from './db/prisma.js';
 import healthRoutes from './routes/health.js';
 import flightRoutes from './routes/flights.js';
+import adminRoutes from './routes/admin.js';
 import authRoutes from './auth/routes.js';
 import { validateJwtSecret } from '@sd/shared/jwt.js';
 
@@ -92,6 +93,9 @@ async function buildServer() {
 
   // Register authentication routes
   await fastify.register(authRoutes, { prefix: '/auth' });
+
+  // Register admin routes (protected, operator-only)
+  await fastify.register(adminRoutes, { prefix: '/admin' });
 
   // Home route
   fastify.get('/', async () => {

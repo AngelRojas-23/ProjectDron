@@ -11,6 +11,14 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      '/admin': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/flights': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/hls': {
         target: 'http://localhost:8888',
         changeOrigin: true,

@@ -68,6 +68,11 @@ export default function Dashboard() {
           <a href="/flights" style={navLinkStyle}>
             Flight History
           </a>
+          {isOperator && (
+            <a href="/admin" style={navLinkStyle}>
+              Admin
+            </a>
+          )}
         </div>
         <button onClick={handleLogout} style={styles.logoutButton}>
           Logout
