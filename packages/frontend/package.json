@@ -11,9 +11,12 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/leaflet": "^1.9.21",
     "hls.js": "^1.5.8",
+    "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^6.22.1",
     "socket.io-client": "^4.7.4",
     "zustand": "^4.5.1"

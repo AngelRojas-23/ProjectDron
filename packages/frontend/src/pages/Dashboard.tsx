@@ -2,14 +2,18 @@
  * Dashboard page component
  * Protected route that displays drone list, telemetry, and control buttons
  */
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { useDroneStore } from '../store/drones';
+import { useDronePositionStore } from '../store/dronePositions';
+import { getSocket } from '../lib/socket';
 import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { CommandButtons } from '../components/CommandButtons';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { DroneSelector } from '../components/DroneSelector';
+import { DroneMap } from '../components/DroneMap';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -17,6 +21,19 @@ export default function Dashboard() {
   const logout = useAuthStore((state) => state.logout);
   const isOperator = user?.role === 'operator';
   const selectedDroneId = useDroneStore((state) => state.selectedDroneId);
+  const selectDrone = useDroneStore((state) => state.selectDrone);
+  const subscribeToTelemetry = useDronePositionStore((state) => state.subscribeToTelemetry);
+
+  // Subscribe to telemetry on mount
+  useEffect(() => {
+    const socket = getSocket();
+    const cleanup = subscribeToTelemetry(socket);
+    return cleanup;
+  }, [subscribeToTelemetry]);
+
+  const handleDroneSelect = (droneId: string) => {
+    selectDrone(droneId);
+  };
 
   const handleLogout = () => {
     // Clear auth state
@@ -45,6 +62,9 @@ export default function Dashboard() {
 
         {/* Drone Selector */}
         <DroneSelector />
+
+        {/* Drone Map */}
+        <DroneMap selectedDroneId={selectedDroneId} onDroneSelect={handleDroneSelect} />
 
         {/* Video and Telemetry Split - only shown when a drone is selected */}
         {selectedDroneId ? (
