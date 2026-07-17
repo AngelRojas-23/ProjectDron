@@ -52,6 +52,11 @@ export function registerEventHandlers(io: Server, roomManager: RoomManager): voi
   io.on('connection', (socket: Socket) => {
     console.log(`Socket connected: ${socket.id}, User: ${socket.data.user?.userId}`);
 
+    // Handle drones:list event (no auth required - read-only list)
+    socket.on('drones:list', (callback: (response: { drones: string[] }) => void) => {
+      handleDronesList(roomManager, callback);
+    });
+
     // Handle drone:join event
     socket.on('drone:join', (droneId: string, callback: (response: { ok: boolean; error?: string }) => void) => {
       handleDroneJoin(socket, roomManager, droneId, callback);
@@ -68,6 +73,20 @@ export function registerEventHandlers(io: Server, roomManager: RoomManager): voi
       roomManager.leaveRoom(socket);
     });
   });
+}
+
+/**
+ * Handle drones:list event
+ * Returns list of active drone IDs - no auth required
+ * @param roomManager - The room manager
+ * @param callback - Response callback
+ */
+function handleDronesList(
+  roomManager: RoomManager,
+  callback: (response: { drones: string[] }) => void
+): void {
+  const drones = roomManager.getAllDrones();
+  callback({ drones });
 }
 
 /**

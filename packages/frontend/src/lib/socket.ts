@@ -5,7 +5,7 @@
 import { io, Socket } from 'socket.io-client';
 
 // Default streaming server URL
-const STREAMING_URL = 'http://localhost:3002';
+const STREAMING_URL = 'http://localhost:3001';
 
 /**
  * Create and connect a socket.io client

@@ -4,16 +4,19 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
+import { useDroneStore } from '../store/drones';
 import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { CommandButtons } from '../components/CommandButtons';
 import { VideoPlayer } from '../components/VideoPlayer';
+import { DroneSelector } from '../components/DroneSelector';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const isOperator = user?.role === 'operator';
+  const selectedDroneId = useDroneStore((state) => state.selectedDroneId);
 
   const handleLogout = () => {
     // Clear auth state
@@ -21,9 +24,6 @@ export default function Dashboard() {
     // Redirect to login
     navigate('/');
   };
-
-  // For demo, use drone-1 as the selected drone
-  const selectedDroneId = 'drone-1';
 
   return (
     <div style={styles.container}>
@@ -43,23 +43,27 @@ export default function Dashboard() {
           <p style={styles.role}>Role: {user?.role || 'viewer'}</p>
         </div>
 
-        <div style={styles.droneSection}>
-          <h2 style={styles.sectionTitle}>Drones</h2>
-          <p style={styles.placeholder}>
-            No drones available. Connect a drone to see it here.
-          </p>
-        </div>
+        {/* Drone Selector */}
+        <DroneSelector />
 
-        {/* Video and Telemetry Split - 60% / 40% */}
-        <div style={styles.splitSection}>
-          <div className="dashboard-video-section" style={styles.videoSection}>
-            <h2 style={styles.sectionTitle}>Live Video</h2>
-            <VideoPlayer droneId={selectedDroneId} />
+        {/* Video and Telemetry Split - only shown when a drone is selected */}
+        {selectedDroneId ? (
+          <div style={styles.splitSection}>
+            <div className="dashboard-video-section" style={styles.videoSection}>
+              <h2 style={styles.sectionTitle}>Live Video</h2>
+              <VideoPlayer droneId={selectedDroneId} />
+            </div>
+            <div className="dashboard-telemetry-section" style={styles.telemetrySection}>
+              <TelemetryPanel droneId={selectedDroneId} />
+            </div>
           </div>
-          <div className="dashboard-telemetry-section" style={styles.telemetrySection}>
-            <TelemetryPanel droneId={selectedDroneId} />
+        ) : (
+          <div style={styles.placeholderContainer}>
+            <p style={styles.placeholder}>
+              Select a drone to view video and telemetry
+            </p>
           </div>
-        </div>
+        )}
 
         {/* Command Buttons - only for operators */}
         {isOperator && (
@@ -120,21 +124,23 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#6b7280',
     fontSize: '0.875rem',
   },
-  droneSection: {
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    marginBottom: '1rem',
-  },
   sectionTitle: {
     margin: '0 0 1rem',
     color: '#1a1a1a',
     fontSize: '1.25rem',
   },
+  placeholderContainer: {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    marginBottom: '1rem',
+    textAlign: 'center',
+  },
   placeholder: {
     color: '#6b7280',
     fontStyle: 'italic',
+    fontSize: '1rem',
   },
   splitSection: {
     display: 'flex',
