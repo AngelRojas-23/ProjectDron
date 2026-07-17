@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { useStreamStore } from '../store/stream';
+import { TelemetryOverlay } from './TelemetryOverlay';
 
 interface VideoPlayerProps {
   droneId: string;
@@ -176,13 +177,16 @@ export function VideoPlayer({ droneId }: VideoPlayerProps) {
 
   return (
     <div style={styles.container}>
-      <video
-        ref={videoRef}
-        style={styles.video}
-        muted
-        playsInline
-        autoPlay
-      />
+      <div style={styles.videoWrapper}>
+        <video
+          ref={videoRef}
+          style={styles.video}
+          muted
+          playsInline
+          autoPlay
+        />
+        <TelemetryOverlay droneId={droneId} />
+      </div>
     </div>
   );
 }
@@ -194,6 +198,12 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#000',
     borderRadius: '8px',
     overflow: 'hidden',
+    position: 'relative',
+  },
+  videoWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
   },
   video: {
     width: '100%',
