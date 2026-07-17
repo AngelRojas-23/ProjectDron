@@ -13,6 +13,12 @@ vi.mock('../db/prisma.js', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    refreshToken: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
+    },
   },
 }));
 

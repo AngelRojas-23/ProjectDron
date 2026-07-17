@@ -13,6 +13,42 @@ import type { RegisterPayload, LoginCredentials, AuthResponse, UserRole } from '
 const BCRYPT_ROUNDS = 10;
 
 /**
+ * Save a refresh token to the database for revocation support
+ */
+async function saveRefreshToken(userId: string, token: string): Promise<void> {
+  // Refresh token expires in 7 days
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await prisma.refreshToken.create({
+    data: {
+      token,
+      userId,
+      expiresAt,
+    },
+  });
+}
+
+/**
+ * Check if a refresh token has been revoked
+ */
+async function isTokenRevoked(token: string): Promise<boolean> {
+  const stored = await prisma.refreshToken.findUnique({
+    where: { token },
+    select: { revoked: true },
+  });
+  return stored?.revoked ?? true; // If not found, treat as revoked
+}
+
+/**
+ * Revoke all refresh tokens for a user (used on logout or password change)
+ */
+async function revokeAllUserTokens(userId: string): Promise<void> {
+  await prisma.refreshToken.updateMany({
+    where: { userId, revoked: false },
+    data: { revoked: true },
+  });
+}
+
+/**
  * Validate password strength
  * Returns null if valid, or an error message if too weak
  */
@@ -105,6 +141,9 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // Generate tokens
       const tokens = generateTokens(user.id, user.role);
 
+      // Save refresh token to database (for revocation support)
+      await saveRefreshToken(user.id, tokens.refreshToken);
+
       // Return response (access token in httpOnly cookie)
       const response: AuthResponse = {
         user: {
@@ -177,6 +216,9 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // Generate tokens
       const tokens = generateTokens(user.id, user.role);
 
+      // Save refresh token to database (for revocation support)
+      await saveRefreshToken(user.id, tokens.refreshToken);
+
       // Return response
       const response: AuthResponse = {
         user: {
@@ -234,6 +276,15 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      // Check if token has been revoked
+      const revoked = await isTokenRevoked(refreshToken);
+      if (revoked) {
+        return reply.status(401).send({
+          error: 'Unauthorized',
+          message: 'Refresh token has been revoked',
+        });
+      }
+
       // Find user by ID
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
@@ -246,8 +297,17 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
+      // Revoke old refresh token (rotation)
+      await prisma.refreshToken.update({
+        where: { token: refreshToken },
+        data: { revoked: true },
+      });
+
       // Generate new tokens (rotation)
       const tokens = generateTokens(user.id, user.role);
+
+      // Save new refresh token
+      await saveRefreshToken(user.id, tokens.refreshToken);
 
       // Return response
       const response: AuthResponse = {
@@ -273,6 +333,41 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.status(200).send(response);
     }
   );
+
+  /**
+   * POST /auth/logout
+   * Revoke all refresh tokens for the authenticated user
+   * Requires a valid access token in the Authorization header
+   */
+  fastify.post('/logout', async (request, reply) => {
+    // Get token from Authorization header
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return reply.status(401).send({
+        error: 'Unauthorized',
+        message: 'Missing or invalid authorization header',
+      });
+    }
+
+    try {
+      const token = authHeader.slice(7);
+      const { verifyAccess } = await import('@sd/shared/jwt.js');
+      const payload = verifyAccess(token);
+
+      // Revoke all tokens for this user
+      await revokeAllUserTokens(payload.userId);
+
+      // Clear the access token cookie
+      reply.clearCookie('accessToken', { path: '/' });
+
+      return reply.status(200).send({ message: 'Logged out successfully' });
+    } catch {
+      return reply.status(401).send({
+        error: 'Unauthorized',
+        message: 'Invalid or expired token',
+      });
+    }
+  });
 };
 
 export default authRoutes;

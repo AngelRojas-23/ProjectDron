@@ -21,9 +21,25 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  clients   Client[]
+  clients        Client[]
+  refreshTokens  RefreshToken[]
 
   @@map("users")
+}
+
+// RefreshToken model - allows token revocation
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
 }
 
 // User roles
