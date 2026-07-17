@@ -57,7 +57,7 @@ ssh "root@$SERVER_IP" bash -s << 'REMOTE'
   # Usar PM2 para producción
   npm install -g pm2
   pm2 delete streaming-dron 2>/dev/null || true
-  pm2 start pnpm --name streaming-dron -- dev
+  pm2 start pnpm --name streaming-dron -- start
   pm2 save
 REMOTE
 

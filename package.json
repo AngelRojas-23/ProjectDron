@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n backend,streaming,frontend \"pnpm --filter backend dev\" \"pnpm --filter streaming dev\" \"pnpm --filter frontend dev\"",
+    "start": "concurrently -n backend,streaming,frontend \"pnpm --filter backend start\" \"pnpm --filter streaming dev\" \"pnpm --filter frontend preview\"",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint"

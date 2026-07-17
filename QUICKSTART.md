@@ -30,7 +30,7 @@ docker compose up -d
 
 Esto levanta:
 - **PostgreSQL 16** — base de datos principal
-- **pgAdmin** — administrador de BD (http://localhost:5050)
+- **pgAdmin** — administrador de BD (http://localhost:5050, solo en desarrollo)
 - **mavlink2rest** — bridge MAVLink → WebSocket
 - **MediaMTX** — servidor RTMP → HLS
 - **FFmpeg simulator** — genera video de prueba (testsrc)
@@ -55,19 +55,30 @@ Esto corre en paralelo:
 ## 6. Probar
 
 Abre http://localhost:5173, regístrate, y verás:
+- Mapa en tiempo real con posición de drones
 - Video de prueba del FFmpeg simulator
-- Overlay OSD con telemetría simulada
-- Dashboard con selector de drones
+- Overlay OSD con telemetría (altitud, velocidad, batería, brújula)
+- Alertas de batería baja y conexión perdida
+- Historial de vuelos con reproducción
+- Panel de administración de usuarios
 
 ---
+
+## Producción
+
+```bash
+# En un servidor Ubuntu con Docker, un solo comando:
+./deploy.sh <ip-del-servidor> [dominio.com]
+```
 
 ## Comandos útiles
 
 | Comando | Qué hace |
 |---------|----------|
-| `pnpm test` | Corre todos los tests |
+| `pnpm test` | Corre todos los tests (102 tests) |
 | `pnpm build` | Compila todos los paquetes |
 | `pnpm lint` | TypeScript check estricto |
+| `pnpm start` | Inicia en modo producción |
 | `docker compose logs -f` | Logs de servicios Docker |
 | `docker compose down` | Detiene servicios Docker |
 
@@ -75,8 +86,8 @@ Abre http://localhost:5173, regístrate, y verás:
 
 ```
 packages/
-  backend/     — Fastify API (auth, health, Prisma)
-  streaming/   — Socket.io + MAVLink bridge
-  frontend/    — React + Vite + hls.js
+  backend/     — Fastify API (auth, health, Prisma, admin)
+  streaming/   — Socket.io + MAVLink bridge + grabación de vuelos
+  frontend/    — React + Vite + Leaflet + hls.js
   shared/      — Tipos TypeScript compartidos
 ```
