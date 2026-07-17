@@ -7,6 +7,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
+import helmet from '@fastify/helmet';
 import { connectDatabase, disconnectDatabase } from './db/prisma.js';
 import healthRoutes from './routes/health.js';
 import authRoutes from './auth/routes.js';
@@ -33,6 +34,19 @@ async function buildServer() {
   await fastify.register(cors, {
     origin: FRONTEND_ORIGIN,
     credentials: true,
+  });
+
+  // Security headers (CSP, X-Frame-Options, etc.)
+  await fastify.register(helmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        connectSrc: ["'self'", 'ws://localhost:3001'],
+      },
+    },
   });
 
   // Register cookie plugin for httpOnly session management
