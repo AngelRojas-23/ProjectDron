@@ -16,7 +16,7 @@ const mockHlsInstance = {
 };
 
 vi.mock('hls.js', () => {
-  const HlsMock = vi.fn(() => mockHlsInstance);
+  const HlsMock: any = vi.fn(() => mockHlsInstance);
   HlsMock.isSupported = vi.fn().mockReturnValue(true);
   HlsMock.Events = {
     MANIFEST_PARSED: 'hlsManifestParsed',
