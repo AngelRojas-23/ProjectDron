@@ -9,6 +9,7 @@ import { useDroneStore } from '../store/drones';
 import { useDronePositionStore } from '../store/dronePositions';
 import { getSocket } from '../lib/socket';
 import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
+import { AlertPanel } from '../components/AlertPanel';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { CommandButtons } from '../components/CommandButtons';
 import { VideoPlayer } from '../components/VideoPlayer';
@@ -48,6 +49,7 @@ export default function Dashboard() {
         <div style={styles.headerLeft}>
           <h1 style={styles.title}>Dashboard</h1>
           <ConnectionStatusBadge />
+          <AlertPanel />
         </div>
         <button onClick={handleLogout} style={styles.logoutButton}>
           Logout
