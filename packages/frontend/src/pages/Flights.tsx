@@ -5,11 +5,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 import { formatDuration, calculateStats } from '../store/flights';
 import { fetchFlights, type FlightDetails, type TelemetryPoint } from '../lib/api';
 
 /**
  * Mini map component for displaying flight path
+ * Uses semantic colors for the map visualization (green path, red markers)
  */
 function FlightMap({
   telemetry,
@@ -18,6 +20,8 @@ function FlightMap({
   telemetry: TelemetryPoint[];
   replayIndex: number;
 }) {
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -43,12 +47,12 @@ function FlightMap({
     const latRange = maxLat - minLat || 0.001;
     const lonRange = maxLon - minLon || 0.001;
 
-    // Clear canvas
-    ctx.fillStyle = '#f0fdf4';
+    // Clear canvas - use light background for map clarity
+    ctx.fillStyle = mode === 'dark' ? '#1e293b' : '#f0fdf4';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw grid
-    ctx.strokeStyle = '#dcfce7';
+    ctx.strokeStyle = mode === 'dark' ? '#334155' : '#dcfce7';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const x = (i / 4) * canvas.width;
@@ -128,14 +132,14 @@ function FlightMap({
         ctx.fill();
       }
     }
-  }, [telemetry, replayIndex]);
+  }, [telemetry, replayIndex, mode]);
 
   return (
     <canvas
       ref={canvasRef}
       width={400}
       height={250}
-      style={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+      style={{ borderRadius: '8px', border: `1px solid ${t.border}` }}
     />
   );
 }
@@ -143,6 +147,8 @@ function FlightMap({
 export default function Flights() {
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
 
   const [flights, setFlights] = useState<
     Array<{
@@ -248,6 +254,7 @@ export default function Flights() {
   if (selectedFlight) {
     const stats = calculateStats(selectedFlight.telemetry);
     const currentTelemetry = selectedFlight.telemetry[replayIndex];
+    const styles = getStyles(t);
 
     return (
       <div style={styles.container}>
@@ -345,7 +352,7 @@ export default function Flights() {
                         style={{
                           ...styles.tr,
                           backgroundColor:
-                            idx === replayIndex ? '#dcfce7' : 'transparent',
+                            idx === replayIndex ? (mode === 'dark' ? '#1e3a2f' : '#dcfce7') : 'transparent',
                         }}
                       >
                         <td style={styles.td}>
@@ -371,6 +378,8 @@ export default function Flights() {
   }
 
   // Render flight list
+  const styles = getStyles(t);
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -448,11 +457,11 @@ export default function Flights() {
   );
 }
 
-// Styles matching Dashboard design language
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: t.bg,
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   header: {
@@ -460,8 +469,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1rem 2rem',
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    backgroundColor: t.bgHeader,
+    boxShadow: t.shadow,
   },
   headerLeft: {
     display: 'flex',
@@ -470,13 +479,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     margin: 0,
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.5rem',
   },
   backButton: {
     padding: '0.5rem 1rem',
-    backgroundColor: '#f3f4f6',
-    color: '#374151',
+    backgroundColor: t.hover,
+    color: t.text,
     border: 'none',
     borderRadius: '4px',
     fontSize: '0.875rem',
@@ -501,7 +510,7 @@ const styles: Record<string, React.CSSProperties> = {
   loading: {
     textAlign: 'center',
     padding: '2rem',
-    color: '#6b7280',
+    color: t.textSecondary,
   },
   error: {
     textAlign: 'center',
@@ -511,13 +520,13 @@ const styles: Record<string, React.CSSProperties> = {
   empty: {
     textAlign: 'center',
     padding: '2rem',
-    color: '#6b7280',
+    color: t.textSecondary,
     fontStyle: 'italic',
   },
   tableContainer: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
     overflow: 'auto',
   },
   table: {
@@ -528,14 +537,14 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '1rem',
     textAlign: 'left',
     fontWeight: '600',
-    color: '#374151',
-    borderBottom: '2px solid #e5e7eb',
+    color: t.textSecondary,
+    borderBottom: `2px solid ${t.border}`,
     fontSize: '0.875rem',
   },
   td: {
     padding: '1rem',
-    color: '#1a1a1a',
-    borderBottom: '1px solid #e5e7eb',
+    color: t.text,
+    borderBottom: `1px solid ${t.border}`,
     fontSize: '0.875rem',
   },
   tr: {
@@ -565,18 +574,18 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     marginBottom: '1.5rem',
     padding: '1rem',
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
   },
   droneName: {
     margin: 0,
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.25rem',
   },
   flightTime: {
     margin: '0.25rem 0 0',
-    color: '#6b7280',
+    color: t.textSecondary,
     fontSize: '0.875rem',
   },
   replayButton: {
@@ -597,21 +606,21 @@ const styles: Record<string, React.CSSProperties> = {
   },
   statCard: {
     padding: '1rem',
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
     textAlign: 'center',
   },
   statLabel: {
     display: 'block',
-    color: '#6b7280',
+    color: t.textSecondary,
     fontSize: '0.75rem',
     textTransform: 'uppercase',
     marginBottom: '0.25rem',
   },
   statValue: {
     display: 'block',
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.5rem',
     fontWeight: '600',
   },
@@ -622,28 +631,28 @@ const styles: Record<string, React.CSSProperties> = {
   mapSection: {
     flex: '0 0 420px',
     padding: '1rem',
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
   },
   telemetrySection: {
     flex: '1',
     padding: '1rem',
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
   },
   sectionTitle: {
     margin: '0 0 1rem',
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1rem',
   },
   currentTelemetry: {
     marginTop: '0.75rem',
     padding: '0.5rem',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: t.hover,
     borderRadius: '4px',
     fontSize: '0.75rem',
-    color: '#374151',
+    color: t.textSecondary,
   },
-};
+});

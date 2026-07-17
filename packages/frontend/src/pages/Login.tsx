@@ -5,6 +5,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 
 /**
  * Backend API URL for authentication
@@ -14,6 +15,8 @@ const API_URL = 'http://localhost:3001';
 export default function Login() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,6 +58,8 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const styles = getStyles(t);
 
   return (
     <div style={styles.container}>
@@ -104,33 +109,33 @@ export default function Login() {
   );
 }
 
-// Simple inline styles (no CSS-in-JS library for simplicity)
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
     minHeight: '100vh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: t.bg,
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     padding: '2rem',
     borderRadius: '8px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
     width: '100%',
     maxWidth: '400px',
   },
   title: {
     margin: 0,
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.5rem',
     textAlign: 'center',
   },
   subtitle: {
     margin: '0.5rem 0 1.5rem',
-    color: '#666',
+    color: t.textSecondary,
     fontSize: '1rem',
     fontWeight: 'normal',
     textAlign: 'center',
@@ -148,14 +153,16 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     fontSize: '0.875rem',
     fontWeight: '500',
-    color: '#374151',
+    color: t.text,
   },
   input: {
     padding: '0.625rem',
-    border: '1px solid #d1d5db',
+    border: `1px solid ${t.inputBorder}`,
     borderRadius: '4px',
     fontSize: '1rem',
     outline: 'none',
+    backgroundColor: t.inputBg,
+    color: t.text,
   },
   button: {
     padding: '0.75rem',
@@ -175,4 +182,4 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '4px',
     fontSize: '0.875rem',
   },
-};
+});

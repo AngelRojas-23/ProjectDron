@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useAlertStore, type Alert, type AlertSeverity } from '../store/alerts';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 import { getSocket } from '../lib/socket';
 
 /**
@@ -32,6 +33,8 @@ function timeAgo(date: Date): string {
  */
 export function AlertPanel() {
   const { alerts, unreadCount, acknowledgeAlert, acknowledgeAll, subscribeToTelemetry } = useAlertStore();
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
   const [isOpen, setIsOpen] = useState(false);
 
   // Subscribe to telemetry for alert detection
@@ -42,6 +45,7 @@ export function AlertPanel() {
   }, [subscribeToTelemetry]);
 
   const recentAlerts = alerts.slice(0, 20);
+  const styles = getStyles(t);
 
   return (
     <div style={styles.container}>
@@ -100,13 +104,16 @@ function AlertItem({
   alert: Alert;
   onAcknowledge: (id: string) => void;
 }) {
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
   const severityStyle = SEVERITY_STYLES[alert.severity];
+  const styles = getStyles(t);
 
   return (
     <div
       style={{
         ...styles.alertItem,
-        backgroundColor: alert.acknowledged ? '#f9fafb' : severityStyle.bg,
+        backgroundColor: alert.acknowledged ? t.hover : severityStyle.bg,
         borderLeft: `3px solid ${severityStyle.color}`,
       }}
     >
@@ -136,7 +143,8 @@ function AlertItem({
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
     position: 'relative',
   },
@@ -171,9 +179,9 @@ const styles: Record<string, React.CSSProperties> = {
     right: 0,
     width: '360px',
     maxHeight: '480px',
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    boxShadow: t.shadow,
     zIndex: 1000,
     display: 'flex',
     flexDirection: 'column',
@@ -184,13 +192,13 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '0.75rem 1rem',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: `1px solid ${t.border}`,
   },
   panelTitle: {
     margin: 0,
     fontSize: '1rem',
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: t.text,
   },
   ackAllButton: {
     background: 'none',
@@ -207,14 +215,14 @@ const styles: Record<string, React.CSSProperties> = {
   emptyState: {
     padding: '2rem',
     textAlign: 'center',
-    color: '#9ca3af',
+    color: t.textSecondary,
     fontSize: '0.875rem',
   },
   alertItem: {
     display: 'flex',
     alignItems: 'flex-start',
     padding: '0.75rem 1rem',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: `1px solid ${t.border}`,
     transition: 'background-color 0.2s',
   },
   alertContent: {
@@ -236,12 +244,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   alertTime: {
     fontSize: '0.7rem',
-    color: '#9ca3af',
+    color: t.textSecondary,
     marginLeft: 'auto',
   },
   alertMessage: {
     fontSize: '0.8rem',
-    color: '#4b5563',
+    color: t.textSecondary,
     marginBottom: '0.25rem',
     lineHeight: 1.3,
   },
@@ -251,14 +259,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   alertDrone: {
     fontSize: '0.7rem',
-    color: '#6b7280',
-    backgroundColor: '#f3f4f6',
+    color: t.textSecondary,
+    backgroundColor: t.hover,
     padding: '1px 6px',
     borderRadius: '4px',
   },
   ackButton: {
     background: 'none',
-    border: '1px solid #d1d5db',
+    border: `1px solid ${t.border}`,
     borderRadius: '50%',
     width: '24px',
     height: '24px',
@@ -267,8 +275,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     cursor: 'pointer',
     fontSize: '0.75rem',
-    color: '#6b7280',
+    color: t.textSecondary,
     flexShrink: 0,
     marginLeft: '0.5rem',
   },
-};
+});

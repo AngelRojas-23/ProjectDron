@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 
 /**
  * User type from API
@@ -35,6 +36,8 @@ export default function Admin() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const accessToken = useAuthStore((state) => state.accessToken);
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +126,8 @@ export default function Admin() {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to delete user' });
     }
   };
+
+  const styles = getStyles(t);
 
   if (loading) {
     return (
@@ -221,10 +226,11 @@ export default function Admin() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: t.bg,
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   loading: {
@@ -232,7 +238,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     alignItems: 'center',
     height: '100vh',
-    color: '#6b7280',
+    color: t.textSecondary,
     fontSize: '1rem',
   },
   header: {
@@ -240,8 +246,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1rem 2rem',
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    backgroundColor: t.bgHeader,
+    boxShadow: t.shadow,
   },
   headerLeft: {
     display: 'flex',
@@ -250,14 +256,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     margin: 0,
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.5rem',
   },
   backButton: {
     padding: '0.5rem 1rem',
-    backgroundColor: '#f3f4f6',
-    color: '#374151',
-    border: '1px solid #d1d5db',
+    backgroundColor: t.hover,
+    color: t.text,
+    border: `1px solid ${t.border}`,
     borderRadius: '6px',
     fontSize: '0.875rem',
     fontWeight: '500',
@@ -294,17 +300,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.875rem',
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
     overflow: 'hidden',
   },
   sectionTitle: {
     margin: 0,
     padding: '1rem 1.5rem',
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.1rem',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: `1px solid ${t.border}`,
   },
   table: {
     display: 'flex',
@@ -313,25 +319,25 @@ const styles: Record<string, React.CSSProperties> = {
   tableHeader: {
     display: 'flex',
     padding: '0.75rem 1.5rem',
-    backgroundColor: '#f9fafb',
-    borderBottom: '1px solid #e5e7eb',
+    backgroundColor: t.hover,
+    borderBottom: `1px solid ${t.border}`,
     fontSize: '0.8rem',
     fontWeight: '600',
-    color: '#6b7280',
+    color: t.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
   tableRow: {
     display: 'flex',
     padding: '0.75rem 1.5rem',
-    borderBottom: '1px solid #f3f4f6',
+    borderBottom: `1px solid ${t.border}`,
     alignItems: 'center',
     fontSize: '0.875rem',
   },
-  colName: { flex: '1' },
-  colEmail: { flex: '1.5', color: '#6b7280' },
+  colName: { flex: '1', color: t.text },
+  colEmail: { flex: '1.5', color: t.textSecondary },
   colRole: { flex: '0.5' },
-  colDate: { flex: '1', color: '#6b7280', fontSize: '0.8rem' },
+  colDate: { flex: '1', color: t.textSecondary, fontSize: '0.8rem' },
   colActions: {
     flex: '1',
     display: 'flex',
@@ -347,9 +353,11 @@ const styles: Record<string, React.CSSProperties> = {
   roleSelect: {
     padding: '0.25rem 0.5rem',
     borderRadius: '4px',
-    border: '1px solid #d1d5db',
+    border: `1px solid ${t.border}`,
     fontSize: '0.8rem',
     cursor: 'pointer',
+    backgroundColor: t.inputBg,
+    color: t.text,
   },
   deleteButton: {
     padding: '0.25rem 0.75rem',
@@ -361,4 +369,4 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontWeight: '500',
   },
-};
+});

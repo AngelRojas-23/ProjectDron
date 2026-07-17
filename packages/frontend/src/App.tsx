@@ -3,9 +3,10 @@
  * Handles protected routes and navigation
  * Uses lazy loading for non-critical pages
  */
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
+import { useThemeStore, theme } from './store/theme';
 import Login from './pages/Login';
 
 /**
@@ -50,6 +51,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const mode = useThemeStore((state) => state.mode);
+
+  // Update body background and text color when theme changes
+  useEffect(() => {
+    const t = theme[mode];
+    document.body.style.backgroundColor = t.bg;
+    document.body.style.color = t.text;
+  }, [mode]);
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>

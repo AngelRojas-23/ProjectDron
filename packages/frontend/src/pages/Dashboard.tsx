@@ -7,9 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { useDroneStore } from '../store/drones';
 import { useDronePositionStore } from '../store/dronePositions';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 import { getSocket } from '../lib/socket';
 import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
 import { AlertPanel } from '../components/AlertPanel';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { CommandButtons } from '../components/CommandButtons';
 import { VideoPlayer } from '../components/VideoPlayer';
@@ -19,17 +21,17 @@ import { DroneMap } from '../components/DroneMap';
 /**
  * Navigation link styles
  */
-const navLinkStyle: React.CSSProperties = {
+const getNavLinkStyle = (t: ThemeColors): React.CSSProperties => ({
   padding: '0.5rem 1rem',
   backgroundColor: 'transparent',
-  color: '#374151',
+  color: t.text,
   border: 'none',
   borderRadius: '4px',
   fontSize: '0.875rem',
   fontWeight: '500',
   cursor: 'pointer',
   textDecoration: 'none',
-};
+});
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -39,6 +41,8 @@ export default function Dashboard() {
   const selectedDroneId = useDroneStore((state) => state.selectedDroneId);
   const selectDrone = useDroneStore((state) => state.selectDrone);
   const subscribeToTelemetry = useDronePositionStore((state) => state.subscribeToTelemetry);
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
 
   // Subscribe to telemetry on mount
   useEffect(() => {
@@ -58,6 +62,8 @@ export default function Dashboard() {
     navigate('/');
   };
 
+  const styles = getStyles(t);
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -65,11 +71,12 @@ export default function Dashboard() {
           <h1 style={styles.title}>Dashboard</h1>
           <ConnectionStatusBadge />
           <AlertPanel />
-          <a href="/flights" style={navLinkStyle}>
+          <ThemeToggle />
+          <a href="/flights" style={getNavLinkStyle(t)}>
             Flight History
           </a>
           {isOperator && (
-            <a href="/admin" style={navLinkStyle}>
+            <a href="/admin" style={getNavLinkStyle(t)}>
               Admin
             </a>
           )}
@@ -121,11 +128,11 @@ export default function Dashboard() {
   );
 }
 
-// Simple inline styles
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: t.bg,
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   header: {
@@ -133,8 +140,8 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1rem 2rem',
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    backgroundColor: t.bgHeader,
+    boxShadow: t.shadow,
   },
   headerLeft: {
     display: 'flex',
@@ -143,7 +150,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     margin: 0,
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.5rem',
   },
   logoutButton: {
@@ -163,27 +170,27 @@ const styles: Record<string, React.CSSProperties> = {
   },
   userInfo: {
     marginBottom: '2rem',
-    color: '#374151',
+    color: t.text,
   },
   role: {
-    color: '#6b7280',
+    color: t.textSecondary,
     fontSize: '0.875rem',
   },
   sectionTitle: {
     margin: '0 0 1rem',
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.25rem',
   },
   placeholderContainer: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     padding: '2rem',
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
     marginBottom: '1rem',
     textAlign: 'center',
   },
   placeholder: {
-    color: '#6b7280',
+    color: t.textSecondary,
     fontStyle: 'italic',
     fontSize: '1rem',
   },
@@ -194,10 +201,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   videoSection: {
     flex: '0 0 60%',
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     padding: '1.5rem',
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
   },
   telemetrySection: {
     flex: '0 0 40%',
@@ -205,7 +212,7 @@ const styles: Record<string, React.CSSProperties> = {
   controlSection: {
     marginBottom: '1rem',
   },
-};
+});
 
 // Inject responsive styles for mobile
 if (typeof document !== 'undefined') {

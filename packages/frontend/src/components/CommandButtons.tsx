@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useSocket } from '../hooks/useSocket';
 import { useMavlinkStore } from '../store/mavlink';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 
 /**
  * Command type for drone control
@@ -30,6 +31,8 @@ const BUTTON_CONFIG: Record<CommandType, { label: string; variant: 'primary' | '
 export function CommandButtons() {
   const socket = useSocket();
   const status = useMavlinkStore((state) => state.status);
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
   const [loadingCommand, setLoadingCommand] = useState<CommandType | null>(null);
   const [feedback, setFeedback] = useState<{ command: string; success: boolean; message: string } | null>(null);
 
@@ -107,6 +110,8 @@ export function CommandButtons() {
   // List of commands to display
   const commands: CommandType[] = ['arm', 'disarm', 'takeoff', 'RTL', 'land'];
 
+  const styles = getStyles(t);
+
   return (
     <div style={styles.container}>
       <h3 style={styles.title}>Drone Control</h3>
@@ -171,21 +176,19 @@ export function CommandButtons() {
   );
 }
 
-/**
- * Inline styles for the component
- */
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
     padding: '1rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
   },
   title: {
     margin: '0 0 1rem',
     fontSize: '1rem',
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: t.text,
   },
   warning: {
     padding: '0.5rem',
@@ -208,4 +211,4 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.875rem',
     textAlign: 'center',
   },
-};
+});

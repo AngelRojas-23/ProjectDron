@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import type { Telemetry } from '@sd/shared/index.js';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 import { useSocket } from '../hooks/useSocket';
 
 /**
@@ -16,7 +17,7 @@ interface TelemetryPanelProps {
 /**
  * Compass component to display heading
  */
-function Compass({ heading }: { heading: number | null }) {
+function Compass({ heading, styles }: { heading: number | null; styles: ReturnType<typeof getStyles> }) {
   const rotation = heading ?? 0;
 
   return (
@@ -48,6 +49,8 @@ function Compass({ heading }: { heading: number | null }) {
 export function TelemetryPanel({ droneId }: TelemetryPanelProps) {
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
   const socket = useSocket();
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
 
   useEffect(() => {
     if (!socket) return;
@@ -66,6 +69,8 @@ export function TelemetryPanel({ droneId }: TelemetryPanelProps) {
     };
   }, [socket, droneId]);
 
+  const styles = getStyles(t);
+
   return (
     <div style={styles.panel}>
       <h3 style={styles.panelTitle}>Flight Telemetry</h3>
@@ -74,7 +79,7 @@ export function TelemetryPanel({ droneId }: TelemetryPanelProps) {
         {/* Compass / Heading */}
         <div style={styles.card}>
           <div style={styles.cardLabel}>Heading</div>
-          <Compass heading={telemetry?.heading ?? null} />
+          <Compass heading={telemetry?.heading ?? null} styles={styles} />
         </div>
 
         {/* Ground Speed */}
@@ -166,21 +171,19 @@ export function TelemetryPanel({ droneId }: TelemetryPanelProps) {
   );
 }
 
-/**
- * Inline styles for the component
- */
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   panel: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     borderRadius: '8px',
     padding: '1rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
   },
   panelTitle: {
     margin: '0 0 1rem',
     fontSize: '1rem',
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: t.text,
   },
   grid: {
     display: 'grid',
@@ -188,14 +191,14 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.75rem',
   },
   card: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: t.hover,
     borderRadius: '6px',
     padding: '0.75rem',
     textAlign: 'center',
   },
   cardLabel: {
     fontSize: '0.75rem',
-    color: '#6b7280',
+    color: t.textSecondary,
     marginBottom: '0.25rem',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
@@ -203,7 +206,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardValue: {
     fontSize: '1rem',
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: t.text,
   },
   // Compass styles
   compassContainer: {
@@ -216,7 +219,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     height: '100%',
     borderRadius: '50%',
-    border: '2px solid #d1d5db',
+    border: `2px solid ${t.border}`,
     position: 'relative',
     transition: 'transform 0.3s ease-out',
   },
@@ -236,7 +239,7 @@ const styles: Record<string, React.CSSProperties> = {
     transform: 'translateY(-50%)',
     fontSize: '0.6rem',
     fontWeight: '700',
-    color: '#6b7280',
+    color: t.textSecondary,
   },
   compassSouth: {
     position: 'absolute',
@@ -245,7 +248,7 @@ const styles: Record<string, React.CSSProperties> = {
     transform: 'translateX(-50%)',
     fontSize: '0.6rem',
     fontWeight: '700',
-    color: '#6b7280',
+    color: t.textSecondary,
   },
   compassWest: {
     position: 'absolute',
@@ -254,7 +257,7 @@ const styles: Record<string, React.CSSProperties> = {
     transform: 'translateY(-50%)',
     fontSize: '0.6rem',
     fontWeight: '700',
-    color: '#6b7280',
+    color: t.textSecondary,
   },
   compassHeading: {
     position: 'absolute',
@@ -263,13 +266,13 @@ const styles: Record<string, React.CSSProperties> = {
     transform: 'translate(-50%, -50%)',
     fontSize: '0.7rem',
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: t.text,
   },
   // Battery bar
   batteryBar: {
     width: '100%',
     height: '4px',
-    backgroundColor: '#e5e7eb',
+    backgroundColor: t.border,
     borderRadius: '2px',
     marginTop: '0.25rem',
     overflow: 'hidden',
@@ -279,4 +282,4 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '2px',
     transition: 'width 0.3s ease, background-color 0.3s ease',
   },
-};
+});

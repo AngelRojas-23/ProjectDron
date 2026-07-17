@@ -4,10 +4,13 @@
  */
 import { useEffect } from 'react';
 import { useDroneStore } from '../store/drones';
+import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 import { getSocket } from '../lib/socket';
 
 export function DroneSelector() {
   const { drones, selectedDroneId, selectDrone, subscribeToDrones } = useDroneStore();
+  const mode = useThemeStore((state) => state.mode);
+  const t = themeColors[mode];
 
   // Subscribe to drone list on mount
   useEffect(() => {
@@ -33,6 +36,8 @@ export function DroneSelector() {
       }
     });
   };
+
+  const styles = getStyles(t);
 
   return (
     <div style={styles.container}>
@@ -73,22 +78,22 @@ export function DroneSelector() {
   );
 }
 
-// Inline styles
-const styles: Record<string, React.CSSProperties> = {
+// Dynamic styles based on theme
+const getStyles = (t: ThemeColors): Record<string, React.CSSProperties> => ({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: t.bgCard,
     padding: '1.5rem',
     borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: t.shadow,
     marginBottom: '1rem',
   },
   title: {
     margin: '0 0 1rem',
-    color: '#1a1a1a',
+    color: t.text,
     fontSize: '1.25rem',
   },
   noDrones: {
-    color: '#6b7280',
+    color: t.textSecondary,
     fontStyle: 'italic',
     margin: 0,
   },
@@ -100,8 +105,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   droneButton: {
     padding: '0.5rem 1rem',
-    backgroundColor: '#f3f4f6',
-    color: '#374151',
+    backgroundColor: t.hover,
+    color: t.text,
     border: '2px solid transparent',
     borderRadius: '6px',
     fontSize: '0.875rem',
@@ -129,4 +134,4 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: '#9ca3af',
     cursor: 'not-allowed',
   },
-};
+});
