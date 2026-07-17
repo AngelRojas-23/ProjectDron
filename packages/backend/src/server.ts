@@ -8,6 +8,8 @@ import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
 import helmet from '@fastify/helmet';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { connectDatabase, disconnectDatabase } from './db/prisma.js';
 import healthRoutes from './routes/health.js';
 import authRoutes from './auth/routes.js';
@@ -59,6 +61,25 @@ async function buildServer() {
   await fastify.register(rateLimit, {
     max: 20,
     timeWindow: '1 minute',
+  });
+
+  // API documentation (Swagger/OpenAPI)
+  await fastify.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Streaming-Dron API',
+        description: 'REST API for drone streaming monitoring platform',
+        version: '0.1.0',
+      },
+      servers: [{ url: `http://localhost:${PORT}`, description: 'Development' }],
+    },
+  });
+  await fastify.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: true,
+    },
   });
 
   // Register health check routes
