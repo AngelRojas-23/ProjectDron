@@ -33,6 +33,7 @@ async function buildServer() {
         ? { target: 'pino-pretty', options: { colorize: true } }
         : undefined,
     },
+    bodyLimit: 1024 * 100, // 100KB max body size
   });
 
   // Register CORS plugin
