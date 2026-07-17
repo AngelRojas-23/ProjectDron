@@ -5,8 +5,8 @@ services:
     image: postgres:16
     container_name: streaming-dron-postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: streaming_dron
     ports:
       - "5432:5432"
@@ -21,9 +21,11 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     container_name: streaming-dron-pgadmin
+    profiles:
+      - dev
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@streaming-dron.local
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@streaming-dron.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?PGADMIN_PASSWORD is required}
     ports:
       - "5050:80"
     volumes:
