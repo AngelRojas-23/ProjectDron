@@ -13,6 +13,26 @@ import type { RegisterPayload, LoginCredentials, AuthResponse, UserRole } from '
 const BCRYPT_ROUNDS = 10;
 
 /**
+ * Validate password strength
+ * Returns null if valid, or an error message if too weak
+ */
+function validatePassword(password: string): string | null {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least one uppercase letter';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain at least one lowercase letter';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain at least one number';
+  }
+  return null;
+}
+
+/**
  * Authentication route plugin
  */
 const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
@@ -30,7 +50,7 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           required: ['email', 'password', 'name'],
           properties: {
             email: { type: 'string', format: 'email' },
-            password: { type: 'string', minLength: 6 },
+            password: { type: 'string', minLength: 8 },
             name: { type: 'string', minLength: 1 },
             role: { type: 'string', enum: ['operator', 'viewer'] },
           },
@@ -45,6 +65,15 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.status(400).send({
           error: 'Invalid payload',
           message: 'email, password, and name are required',
+        });
+      }
+
+      // Validate password strength
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        return reply.status(400).send({
+          error: 'Weak password',
+          message: passwordError,
         });
       }
 

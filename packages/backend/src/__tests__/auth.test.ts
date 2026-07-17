@@ -42,7 +42,7 @@ describe('Auth Routes', () => {
 
   describe('POST /auth/register', () => {
     it('should register a valid user and return 201', async () => {
-      const hashedPassword = await bcrypt.hash('password123', 10);
+      const hashedPassword = await bcrypt.hash('Password123', 10);
 
       prisma.user.findUnique.mockResolvedValue(null);
       prisma.user.create.mockResolvedValue({
@@ -60,7 +60,7 @@ describe('Auth Routes', () => {
         url: '/auth/register',
         payload: {
           email: 'test@example.com',
-          password: 'password123',
+          password: 'Password123',
           name: 'Test User',
         },
       });
@@ -89,7 +89,7 @@ describe('Auth Routes', () => {
         url: '/auth/register',
         payload: {
           email: 'test@example.com',
-          password: 'password123',
+          password: 'Password123',
           name: 'Test User',
         },
       });
@@ -113,7 +113,7 @@ describe('Auth Routes', () => {
 
   describe('POST /auth/login', () => {
     it('should login valid user and return 200', async () => {
-      const hashedPassword = await bcrypt.hash('password123', 10);
+      const hashedPassword = await bcrypt.hash('Password123', 10);
 
       prisma.user.findUnique.mockResolvedValue({
         id: 'user-123',
@@ -130,7 +130,7 @@ describe('Auth Routes', () => {
         url: '/auth/login',
         payload: {
           email: 'test@example.com',
-          password: 'password123',
+          password: 'Password123',
         },
       });
 
