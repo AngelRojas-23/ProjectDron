@@ -79,7 +79,7 @@ describe('Auth Routes', () => {
       expect(body.refreshToken).toBeDefined();
     });
 
-    it('should return 409 for duplicate email', async () => {
+    it('should return 400 for duplicate email (generic message)', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'existing-user',
         email: 'test@example.com',
@@ -100,7 +100,10 @@ describe('Auth Routes', () => {
         },
       });
 
-      expect(response.statusCode).toBe(409);
+      // Returns 400 with generic message to prevent email enumeration
+      expect(response.statusCode).toBe(400);
+      const body = JSON.parse(response.body);
+      expect(body.message).toContain('Could not register user');
     });
 
     it('should return 400 for invalid payload (missing fields)', async () => {

@@ -26,6 +26,54 @@ let bridge: MavlinkBridge | null = null;
 let ioServer: Server | null = null;
 
 /**
+ * Simple in-memory rate limiter for WebSocket events
+ * Tracks event counts per socket ID and rejects if limits exceeded
+ */
+class SocketRateLimiter {
+  private counters: Map<string, { count: number; resetAt: number }> = new Map();
+  private readonly maxEvents: number;
+  private readonly windowMs: number;
+
+  constructor(maxEvents: number = 30, windowMs: number = 60000) {
+    this.maxEvents = maxEvents;
+    this.windowMs = windowMs;
+  }
+
+  /**
+   * Check if a socket is allowed to perform an action
+   * @param socketId - The socket ID
+   * @returns true if allowed, false if rate limited
+   */
+  check(socketId: string): boolean {
+    const now = Date.now();
+    const entry = this.counters.get(socketId);
+
+    if (!entry || now > entry.resetAt) {
+      // First event or window expired — reset counter
+      this.counters.set(socketId, { count: 1, resetAt: now + this.windowMs });
+      return true;
+    }
+
+    if (entry.count >= this.maxEvents) {
+      return false; // Rate limited
+    }
+
+    entry.count++;
+    return true;
+  }
+
+  /**
+   * Remove a socket from tracking (on disconnect)
+   */
+  remove(socketId: string): void {
+    this.counters.delete(socketId);
+  }
+}
+
+// 30 events per minute per socket (drone:join, drone:control, drones:list)
+const rateLimiter = new SocketRateLimiter(30, 60000);
+
+/**
  * Set the MAVLink bridge reference for command handling
  */
 export function setMavlinkBridge(b: MavlinkBridge): void {
@@ -54,22 +102,32 @@ export function registerEventHandlers(io: Server, roomManager: RoomManager): voi
 
     // Handle drones:list event (no auth required - read-only list)
     socket.on('drones:list', (callback: (response: { drones: string[] }) => void) => {
+      if (!rateLimiter.check(socket.id)) {
+        return callback({ drones: [] });
+      }
       handleDronesList(roomManager, callback);
     });
 
     // Handle drone:join event
     socket.on('drone:join', (droneId: string, callback: (response: { ok: boolean; error?: string }) => void) => {
+      if (!rateLimiter.check(socket.id)) {
+        return callback({ ok: false, error: 'Rate limit exceeded' });
+      }
       handleDroneJoin(socket, roomManager, droneId, callback);
     });
 
     // Handle drone:control event
     socket.on('drone:control', (command: ControlCommand, callback: (response: { ok: boolean; error?: string }) => void) => {
+      if (!rateLimiter.check(socket.id)) {
+        return callback({ ok: false, error: 'Rate limit exceeded' });
+      }
       handleDroneControl(socket, roomManager, command, callback);
     });
 
     // Handle disconnection
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${socket.id}`);
+      rateLimiter.remove(socket.id);
       roomManager.leaveRoom(socket);
     });
   });
@@ -112,7 +170,7 @@ function handleDroneJoin(
   }
 
   // Validate droneId
-  if (!droneId || typeof droneId !== 'string') {
+  if (!droneId || typeof droneId !== 'string' || droneId.length > 100) {
     callback({ ok: false, error: 'Invalid drone ID' });
     return;
   }

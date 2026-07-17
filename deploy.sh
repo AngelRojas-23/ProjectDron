@@ -36,6 +36,12 @@ ssh "root@$SERVER_IP" bash -s << 'REMOTE'
   JWT_SECRET=$(openssl rand -hex 32)
   sed -i "s/your-secret-key-here-change-in-production/$JWT_SECRET/" .env
 
+  # Generar contraseña segura para PostgreSQL
+  POSTGRES_PASSWORD=$(openssl rand -hex 16)
+  sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$POSTGRES_PASSWORD/" .env
+  # Actualizar DATABASE_URL con la nueva contraseña
+  sed -i "s|postgres:postgres@|postgres:$POSTGRES_PASSWORD@|" .env
+
   echo "🐳 Iniciando servicios Docker..."
   docker compose up -d
 

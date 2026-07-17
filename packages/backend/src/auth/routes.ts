@@ -113,15 +113,16 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Check if user already exists
+      // Check if user already exists — use generic message to prevent email enumeration
       const existingUser = await prisma.user.findUnique({
         where: { email },
       });
 
       if (existingUser) {
-        return reply.status(409).send({
-          error: 'Conflict',
-          message: 'User with this email already exists',
+        // Return generic error instead of revealing the email exists
+        return reply.status(400).send({
+          error: 'Registration failed',
+          message: 'Could not register user. Please check your information and try again.',
         });
       }
 
