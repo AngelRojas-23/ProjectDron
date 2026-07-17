@@ -1,13 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
     "noEmit": false
   },
-  "include": ["src"],
+  "include": ["src", "../shared/src"],
   "exclude": ["node_modules", "dist"]
 }

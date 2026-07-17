@@ -1,8 +1,9 @@
 /**
  * Vitest setup file for frontend tests
- * Provides jsdom localStorage mock
+ * Provides jsdom localStorage mock and DOM matchers
  */
 import { vi } from 'vitest';
+import '@testing-library/jest-dom';
 
 // Mock localStorage for jsdom environment
 const localStorageMock = {

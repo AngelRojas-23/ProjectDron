@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { useSocket } from '../hooks/useSocket';
-import { useMavlinkStore, type MavlinkStatus } from '../store/mavlink';
+import { useMavlinkStore } from '../store/mavlink';
 
 /**
  * Command type for drone control

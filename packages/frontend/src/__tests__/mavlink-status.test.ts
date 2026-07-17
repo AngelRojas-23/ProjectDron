@@ -3,7 +3,7 @@
  * Tests connection status store updates on mavlink:status events
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useMavlinkStore, type MavlinkStatus } from '../store/mavlink';
+import { type MavlinkStatus } from '../store/mavlink';
 
 // Mock socket.io-client
 const mockSocket = {
@@ -20,7 +20,6 @@ vi.mock('../hooks/useSocket', () => ({
 
 // Import after mocking
 import { useMavlinkStore as importStore } from '../store/mavlink';
-import { useSocket } from '../hooks/useSocket';
 
 describe('useMavlinkStore', () => {
   beforeEach(() => {
