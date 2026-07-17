@@ -10,7 +10,7 @@
     "lint": "pnpm -r lint"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
+    "concurrently": "^10.0.3",
     "typescript": "^5.9.3"
   },
   "engines": {
