@@ -10,7 +10,7 @@ import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/
 /**
  * Backend API URL for authentication
  */
-const API_URL = 'http://localhost:3001';
+const API_URL = 'http://localhost:3000';
 
 export default function Login() {
   const navigate = useNavigate();
