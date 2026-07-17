@@ -51,7 +51,7 @@ ssh "root@$SERVER_IP" bash -s << 'REMOTE'
   pnpm build
 
   echo "🗄️  Migrando base de datos..."
-  pnpm --filter backend db:migrate
+  pnpm --filter backend db:deploy
 
   echo "🔄 Iniciando aplicación..."
   # Usar PM2 para producción
