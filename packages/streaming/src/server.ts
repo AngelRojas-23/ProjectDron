@@ -5,7 +5,7 @@
 
 import { Server } from 'socket.io';
 import { createServer } from 'http';
-import { verifyAccess } from '@sd/shared/jwt.js';
+import { verifyAccess, validateJwtSecret } from '@sd/shared/jwt.js';
 import { registerEventHandlers, setMavlinkBridge } from './events.js';
 import { RoomManager } from './rooms.js';
 import { createMavlinkBridge } from './mavlink/bridge.js';
@@ -81,6 +81,9 @@ function createStreamingServer(): { io: Server; roomManager: RoomManager; httpSe
  * Start the streaming server
  */
 async function start() {
+  // Validate JWT secret before starting
+  validateJwtSecret();
+
   const { io, roomManager, httpServer } = createStreamingServer();
 
   // Start HTTP server (Socket.io attaches to it)

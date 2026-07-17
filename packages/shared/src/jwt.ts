@@ -6,13 +6,37 @@
 import jwt from 'jsonwebtoken';
 import type { JwtPayload, UserRole } from './index.js';
 
-// Default JWT secret - MUST be overridden in production via JWT_SECRET env var
-const DEFAULT_SECRET = 'streaming-dron-dev-secret-change-in-production';
+/**
+ * JWT secret from environment variable
+ * CRITICAL: Must be set in production. Server will not start without it.
+ */
+let _jwtSecret: string | undefined;
 
 /**
- * Environment variable for JWT secret
+ * Validate that JWT_SECRET is configured
+ * Call this at server startup to fail fast if secret is missing
  */
-const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_SECRET;
+export function validateJwtSecret(): void {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      'JWT_SECRET environment variable is required and must be at least 32 characters. ' +
+      'Generate one with: openssl rand -hex 32'
+    );
+  }
+  _jwtSecret = secret;
+}
+
+/**
+ * Get the validated JWT secret
+ * @throws Error if validateJwtSecret() was not called first
+ */
+function getJwtSecret(): string {
+  if (!_jwtSecret) {
+    throw new Error('JWT_SECRET not validated. Call validateJwtSecret() at server startup.');
+  }
+  return _jwtSecret;
+}
 
 /**
  * Access token expiration time (15 minutes)
@@ -32,7 +56,7 @@ export const REFRESH_TOKEN_EXPIRY = '7d';
  */
 export function verifyAccess(token: string): JwtPayload {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as JwtPayload;
 
     // Validate required fields
     if (!decoded.userId || !decoded.role) {
@@ -59,7 +83,7 @@ export function verifyAccess(token: string): JwtPayload {
  */
 export function verifyRefresh(token: string): JwtPayload {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, getJwtSecret(), {
       // Refresh tokens use different algorithm for additional security
     }) as JwtPayload;
 
@@ -91,7 +115,7 @@ export function generateAccessToken(userId: string, role: UserRole): string {
     role,
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJwtSecret(), {
     expiresIn: ACCESS_TOKEN_EXPIRY,
     algorithm: 'HS256',
   });
@@ -109,7 +133,7 @@ export function generateRefreshToken(userId: string, role: UserRole): string {
     role,
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJwtSecret(), {
     expiresIn: REFRESH_TOKEN_EXPIRY,
     algorithm: 'HS256',
   });

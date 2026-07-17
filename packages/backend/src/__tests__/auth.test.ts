@@ -25,6 +25,11 @@ describe('Auth Routes', () => {
   let app: ReturnType<typeof Fastify>;
 
   beforeAll(async () => {
+    // Set JWT secret for tests
+    process.env.JWT_SECRET = 'test-jwt-secret-for-auth-tests-32chr!!';
+    const { validateJwtSecret } = await import('@sd/shared/jwt.js');
+    validateJwtSecret();
+
     app = Fastify();
     await app.register(cookie);
     await app.register(authRoutes, { prefix: '/auth' });

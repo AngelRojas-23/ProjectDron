@@ -6,9 +6,11 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
+import rateLimit from '@fastify/rate-limit';
 import { connectDatabase, disconnectDatabase } from './db/prisma.js';
 import healthRoutes from './routes/health.js';
 import authRoutes from './auth/routes.js';
+import { validateJwtSecret } from '@sd/shared/jwt.js';
 
 // Server configuration
 const HOST = process.env.HOST || '0.0.0.0';
@@ -36,6 +38,12 @@ async function buildServer() {
   // Register cookie plugin for httpOnly session management
   await fastify.register(cookie);
 
+  // Rate limiting: max 20 requests per minute per IP (prevents brute force)
+  await fastify.register(rateLimit, {
+    max: 20,
+    timeWindow: '1 minute',
+  });
+
   // Register health check routes
   await fastify.register(healthRoutes);
 
@@ -61,6 +69,9 @@ async function start() {
   const server = buildServer();
 
   try {
+    // Validate JWT secret before starting
+    validateJwtSecret();
+
     // Connect to database
     await connectDatabase();
 
