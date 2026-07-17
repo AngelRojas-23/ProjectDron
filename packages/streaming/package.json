@@ -13,7 +13,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/client": "^5.10.2",
+    "@prisma/client": "^7.8.0",
     "socket.io": "^4.7.4",
     "@sd/shared": "workspace:*",
     "ws": "^8.16.0"
@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/node": "^20.11.20",
     "@types/ws": "^8.5.10",
-    "prisma": "^5.10.2",
+    "prisma": "^7.8.0",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3",
     "vitest": "^1.2.2"
