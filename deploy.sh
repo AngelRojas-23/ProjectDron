@@ -5,14 +5,25 @@
 
 set -euo pipefail
 
+# Configuración
 SERVER_IP="${1:?Uso: ./deploy.sh <server-ip> [domain]}"
 DOMAIN="${2:-}"
 
+# Elegir URL del repo: SSH es más seguro, HTTPS es más simple
+# Para SSH: GIT_USE_SSH=true ./deploy.sh <ip>
+if [ "${GIT_USE_SSH:-false}" = "true" ]; then
+  REPO_URL="git@github.com:AngelRojas-23/ProjectDron.git"
+else
+  REPO_URL="https://github.com/AngelRojas-23/ProjectDron.git"
+fi
+
 echo "🚀 Deploy Streaming-Dron a $SERVER_IP"
+echo "📦 Repo: $REPO_URL"
 
 # 1. Conectar y preparar servidor
-ssh "root@$SERVER_IP" bash -s << 'REMOTE'
+ssh "root@$SERVER_IP" bash -s "$REPO_URL" << 'REMOTE'
   set -e
+  REPO_URL="$1"
 
   echo "📦 Instalando dependencias..."
   apt-get update -qq
@@ -26,7 +37,7 @@ ssh "root@$SERVER_IP" bash -s << 'REMOTE'
   npm install -g pnpm
 
   echo "📁 Clonando repositorio..."
-  git clone https://github.com/AngelRojas-23/ProjectDron.git /opt/streaming-dron
+  git clone $REPO_URL /opt/streaming-dron
   cd /opt/streaming-dron
 
   echo "🔧 Configurando entorno..."

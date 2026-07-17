@@ -9,6 +9,7 @@ import { useDroneStore } from '../store/drones';
 import { useDronePositionStore } from '../store/dronePositions';
 import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
 import { getSocket } from '../lib/socket';
+import { api } from '../lib/api';
 import { ConnectionStatusBadge } from '../components/ConnectionStatusBadge';
 import { AlertPanel } from '../components/AlertPanel';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -55,7 +56,13 @@ export default function Dashboard() {
     selectDrone(droneId);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Call logout endpoint to clear cookies
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore errors - cookies might not exist
+    }
     // Clear auth state
     logout();
     // Redirect to login

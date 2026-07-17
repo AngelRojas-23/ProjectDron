@@ -145,7 +145,7 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // Save refresh token to database (for revocation support)
       await saveRefreshToken(user.id, tokens.refreshToken);
 
-      // Return response (access token in httpOnly cookie)
+      // Return response (tokens in body for backward compatibility)
       const response: AuthResponse = {
         user: {
           id: user.id,
@@ -164,6 +164,15 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         sameSite: 'lax',
         maxAge: 15 * 60, // 15 minutes in seconds
         path: '/',
+      });
+
+      // Set refresh token as httpOnly cookie (7 days)
+      reply.setCookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        path: '/auth/refresh',
       });
 
       return reply.status(201).send(response);
@@ -241,6 +250,15 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         path: '/',
       });
 
+      // Set refresh token as httpOnly cookie (7 days)
+      reply.setCookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        path: '/auth/refresh',
+      });
+
       return reply.status(200).send(response);
     }
   );
@@ -248,15 +266,15 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   /**
    * POST /auth/refresh
    * Refresh access token using refresh token
+   * Reads refresh token from cookie first, falls back to request body
    * Returns 200 with new tokens, 401 on invalid/expired refresh token
    */
-  fastify.post<{ Body: { refreshToken: string } }>(
+  fastify.post<{ Body: { refreshToken?: string } }>(
     '/refresh',
     {
       schema: {
         body: {
           type: 'object',
-          required: ['refreshToken'],
           properties: {
             refreshToken: { type: 'string' },
           },
@@ -264,7 +282,18 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       },
     },
     async (request, reply) => {
-      const { refreshToken } = request.body;
+      // Read refresh token from cookie first, fall back to request body
+      let refreshToken = request.cookies.refreshToken;
+      if (!refreshToken && request.body?.refreshToken) {
+        refreshToken = request.body.refreshToken;
+      }
+
+      if (!refreshToken) {
+        return reply.status(401).send({
+          error: 'Unauthorized',
+          message: 'Missing refresh token',
+        });
+      }
 
       // Verify refresh token
       let payload;
@@ -331,6 +360,15 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         path: '/',
       });
 
+      // Set new refresh token as httpOnly cookie (7 days)
+      reply.setCookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+        path: '/auth/refresh',
+      });
+
       return reply.status(200).send(response);
     }
   );
@@ -338,28 +376,35 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   /**
    * POST /auth/logout
    * Revoke all refresh tokens for the authenticated user
-   * Requires a valid access token in the Authorization header
+   * Reads access token from cookie first, falls back to Authorization header
    */
   fastify.post('/logout', async (request, reply) => {
-    // Get token from Authorization header
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Get token from cookie first, then fall back to Authorization header
+    let token = request.cookies.accessToken;
+    if (!token) {
+      const authHeader = request.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice(7);
+      }
+    }
+
+    if (!token) {
       return reply.status(401).send({
         error: 'Unauthorized',
-        message: 'Missing or invalid authorization header',
+        message: 'Missing token',
       });
     }
 
     try {
-      const token = authHeader.slice(7);
       const { verifyAccess } = await import('@sd/shared/jwt.js');
       const payload = verifyAccess(token);
 
       // Revoke all tokens for this user
       await revokeAllUserTokens(payload.userId);
 
-      // Clear the access token cookie
+      // Clear both cookies
       reply.clearCookie('accessToken', { path: '/' });
+      reply.clearCookie('refreshToken', { path: '/auth/refresh' });
 
       return reply.status(200).send({ message: 'Logged out successfully' });
     } catch {

@@ -21,10 +21,10 @@ describe('Auth Store', () => {
   });
 
   describe('login', () => {
-    it('should set accessToken, refreshToken, and user on login', () => {
+    it('should set user on login', () => {
       const { login } = store.getState();
 
-      login('access-token-123', 'refresh-token-456', {
+      login({
         id: 'user-1',
         email: 'test@example.com',
         name: 'Test User',
@@ -32,8 +32,6 @@ describe('Auth Store', () => {
       });
 
       const state = store.getState();
-      expect(state.accessToken).toBe('access-token-123');
-      expect(state.refreshToken).toBe('refresh-token-456');
       expect(state.user).toEqual({
         id: 'user-1',
         email: 'test@example.com',
@@ -48,7 +46,7 @@ describe('Auth Store', () => {
     it('should clear all auth state on logout', () => {
       // First login
       const { login, logout } = store.getState();
-      login('access-token', 'refresh-token', {
+      login({
         id: 'user-1',
         email: 'test@example.com',
         name: 'Test',
@@ -59,8 +57,6 @@ describe('Auth Store', () => {
       logout();
 
       const state = store.getState();
-      expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
       expect(state.user).toBeNull();
       expect(state.isAuthenticated).toBe(false);
     });
@@ -72,12 +68,12 @@ describe('Auth Store', () => {
     });
 
     it('should be true after login', () => {
-      store.getState().login('token', 'refresh', { id: '1', email: 'a@b.c', name: 'N', role: 'viewer' });
+      store.getState().login({ id: '1', email: 'a@b.c', name: 'N', role: 'viewer' });
       expect(store.getState().isAuthenticated).toBe(true);
     });
 
     it('should be false after logout', () => {
-      store.getState().login('token', 'refresh', { id: '1', email: 'a@b.c', name: 'N', role: 'viewer' });
+      store.getState().login({ id: '1', email: 'a@b.c', name: 'N', role: 'viewer' });
       store.getState().logout();
       expect(store.getState().isAuthenticated).toBe(false);
     });

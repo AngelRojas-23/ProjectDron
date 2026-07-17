@@ -17,15 +17,23 @@ declare module 'fastify' {
 
 /**
  * JWT auth middleware for admin routes
+ * Reads access token from cookie first, falls back to Authorization header
  */
 async function requireOperator(request: any, reply: any) {
-  const authHeader = request.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Get token from cookie first, then fall back to Authorization header
+  let token = request.cookies.accessToken;
+  if (!token) {
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    }
+  }
+
+  if (!token) {
     return reply.status(401).send({ error: 'Unauthorized', message: 'Missing token' });
   }
 
   try {
-    const token = authHeader.slice(7);
     const payload = verifyAccess(token);
     if (payload.role !== 'operator') {
       return reply.status(403).send({ error: 'Forbidden', message: 'Admin access required' });

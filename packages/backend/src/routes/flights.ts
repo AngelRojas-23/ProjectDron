@@ -6,6 +6,31 @@
 import type { FastifyInstance } from 'fastify';
 import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../db/prisma.js';
+import { verifyAccess } from '@sd/shared/jwt.js';
+
+/**
+ * Auth middleware for flight routes
+ * Reads access token from cookie first, falls back to Authorization header
+ */
+async function requireAuth(request: any, reply: any) {
+  let token = request.cookies.accessToken;
+  if (!token) {
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7);
+    }
+  }
+
+  if (!token) {
+    return reply.status(401).send({ error: 'Unauthorized', message: 'Missing token' });
+  }
+
+  try {
+    verifyAccess(token);
+  } catch {
+    return reply.status(401).send({ error: 'Unauthorized', message: 'Invalid token' });
+  }
+}
 
 /**
  * Flight list item response type
@@ -37,6 +62,9 @@ interface FlightDetails extends FlightListItem {
  * Flight routes plugin
  */
 const flightRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  // All flight routes require authentication
+  fastify.addHook('onRequest', requireAuth);
+
   /**
    * GET /flights
    * List all flights with droneId, startTime, endTime, status

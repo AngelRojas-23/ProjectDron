@@ -46,8 +46,8 @@ export default function Login() {
 
       const data = await response.json();
 
-      // Store auth data in Zustand store (persisted to localStorage)
-      login(data.accessToken, data.refreshToken, data.user);
+      // Store user in Zustand store (tokens are in httpOnly cookies)
+      login(data.user);
 
       // Navigate to dashboard on success
       navigate('/dashboard');

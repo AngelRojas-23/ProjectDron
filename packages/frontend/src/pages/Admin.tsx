@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { useThemeStore, theme as themeColors, type ThemeColors } from '../store/theme';
+import { api } from '../lib/api';
 
 /**
  * User type from API
@@ -35,7 +36,6 @@ function formatDate(dateStr: string): string {
 export default function Admin() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const accessToken = useAuthStore((state) => state.accessToken);
   const mode = useThemeStore((state) => state.mode);
   const t = themeColors[mode];
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -52,20 +52,10 @@ export default function Admin() {
 
   // Fetch users
   useEffect(() => {
-    if (!accessToken) return;
-
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/admin/users', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-
-        const data = await response.json();
+        const data = await api.get<{ users: AdminUser[] }>('/admin/users');
         setUsers(data.users);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -75,28 +65,12 @@ export default function Admin() {
     };
 
     fetchUsers();
-  }, [accessToken]);
+  }, []);
 
   // Change user role
   const handleRoleChange = async (userId: string, newRole: 'operator' | 'viewer') => {
-    if (!accessToken) return;
-
     try {
-      const response = await fetch(`/admin/users/${userId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to update role');
-      }
-
-      const data = await response.json();
+      const data = await api.put<{ user: AdminUser }>(`/admin/users/${userId}/role`, { role: newRole });
       setUsers((prev) => prev.map((u) => (u.id === userId ? data.user : u)));
       setMessage({ type: 'success', text: 'Role updated successfully' });
     } catch (err) {
@@ -106,20 +80,10 @@ export default function Admin() {
 
   // Delete user
   const handleDelete = async (userId: string, userName: string) => {
-    if (!accessToken) return;
     if (!confirm(`Are you sure you want to delete user "${userName}"?`)) return;
 
     try {
-      const response = await fetch(`/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to delete user');
-      }
-
+      await api.delete(`/admin/users/${userId}`);
       setUsers((prev) => prev.filter((u) => u.id !== userId));
       setMessage({ type: 'success', text: 'User deleted successfully' });
     } catch (err) {
